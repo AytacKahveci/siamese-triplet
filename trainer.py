@@ -1,6 +1,8 @@
 import torch
 import numpy as np
+from csv_logger import Logger
 
+logger = Logger("/content/log.csv")
 
 def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs, cuda, log_interval, metrics=[],
         start_epoch=0):
@@ -25,6 +27,7 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
         message = 'Epoch: {}/{}. Train set: Average loss: {:.4f}'.format(epoch + 1, n_epochs, train_loss)
         for metric in metrics:
             message += '\t{}: {}'.format(metric.name(), metric.value())
+            logger.update("train" + metric.name(), metric.value())
 
         val_loss, metrics = test_epoch(val_loader, model, loss_fn, cuda, metrics)
         val_loss /= len(val_loader)
@@ -33,8 +36,9 @@ def fit(train_loader, val_loader, model, loss_fn, optimizer, scheduler, n_epochs
                                                                                  val_loss)
         for metric in metrics:
             message += '\t{}: {}'.format(metric.name(), metric.value())
-
+            logger.update("val" + metric.name(), metric.value())
         print(message)
+        logger.write()
 
 
 def train_epoch(train_loader, model, loss_fn, optimizer, cuda, log_interval, metrics):
@@ -122,3 +126,4 @@ def test_epoch(val_loader, model, loss_fn, cuda, metrics):
                 metric(outputs, target, loss_outputs)
 
     return val_loss, metrics
+
